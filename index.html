@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <input id="playersId" type="text">
+    <br>
+    <input id="version" type="text" value="1.0.0">
+    <br>
+    <span>map</span>
+    <select name="settings" id="map">
+        <option value="ztn" selected>ztn</option>
+        <option value="dm6">dm6</option>
+        <option value="t4">t4</option>
+    </select>
+    <br>
+    <span>mode</span>
+    <select name="settings" id="gameMode">
+        <option value="dm" selected>dm</option>
+        <option value="tdm">tdm</option>
+        <option value="td">td</option>
+    </select>
+    <br>
+    <span>bots:</span><input type="checkbox" id="hasBots">
+    <br>
+    <input id="joinMatch" type="button" value="join match">
+    <br>
+    <input id="startMatch" type="button" value="start match ">
+    <br>
+    <input id="stopSearch" type="button" value="stop search">
+    <br>
+    <input id="joinToPublicLobby" type="button" value="join To Public Lobby">
+    <br>
+    <input id="joinToPrivateLobby" type="button" value="join To Private Lobby">
+</body>
+
+<script>
+
+const addr = 'localhost:8000'
+const socket = new WebSocket('ws://' + addr);
+
+const playerId = document.querySelector('#playersId')
+const version = document.querySelector('#version')
+const hasBots = document.querySelector('#hasBots')
+const gameMode = document.querySelector('#gameMode')
+const map = document.querySelector('#map')
+
+const joinMatch = document.querySelector('#joinMatch')
+const startMatch = document.querySelector('#startMatch')
+const stopSearch = document.querySelector('#stopSearch')
+const joinToPublicLobby = document.querySelector('#joinToPublicLobby')
+const joinToPrivateLobby  = document.querySelector('#joinToPrivateLobby')
+
+// CONNECTION
+socket.onopen = () => {
+    const rnd = Math.round(Math.random() * (999 - 100) + 100);
+    playerId.value = rnd
+
+    socket.send(JSON.stringify({
+        eventName: 'playerConnection',
+        payload: {
+            id: rnd
+        },
+    }))
+};
+
+// MESSAGE
+socket.onmessage = (event) => {
+    const data = JSON.parse(event.data)
+    console.log(data)
+};
+
+// JOIN TO ROOM
+joinMatch.addEventListener('click', () => {
+    socket.send(JSON.stringify({
+        eventName: 'joinToRoom',
+        payload: {
+            playerId: playerId.value,
+            version: version.value,
+            hasBots: hasBots.value,
+            gameMode: gameMode.value,
+            map: map.value,
+        },
+    }))
+})
+
+// JOIN TO PUBLIC LOBBY
+joinToPublicLobby.addEventListener('click', () => {
+    socket.send(JSON.stringify({
+        eventName: 'joinToPublicLobby',
+        payload: {
+            playerId: playerId.value,
+            version: version.value,
+        },
+    }))
+})
+
+// JOIN TO PRIVATE LOBBY
+joinToPrivateLobby.addEventListener('click', () => {
+    socket.send(JSON.stringify({
+        eventName: 'joinToPrivateLobby',
+        payload: {
+            playerId: playerId.value,
+            version: version.value,
+        },
+    }))
+})
+
+// START
+startMatch.addEventListener('click', () => {
+    socket.send(JSON.stringify({
+        eventName: 'startMatch',
+        payload: {
+            playerId: playerId.value,
+        },
+    }))
+})
+
+// STOP SEARCH
+stopSearch.addEventListener('click', () => {
+    socket.send(JSON.stringify({
+        event: 'stopSearch',
+        data: {
+            playerId: playerId.value,
+        },
+    }))
+})
+
+socket.onmessage = (event) => {
+    const data = JSON.parse(event.data)
+    console.log(data)
+};
+
+socket.onclose = () => {
+  if (event.wasClean) {
+    console.log('event code', event.code)
+    console.log('event reason', event.reason)
+  } else {
+    console.log('connection closed')
+  }
+};
+
+socket.onerror = function(error) {
+    console.log(error)
+};
+
+</script>
+
+</html>
