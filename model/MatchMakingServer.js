@@ -13,7 +13,7 @@ class MatchMakingServer {
     
     eventHandler(event, connection) {
         const { eventName, payload } = event
-        this[`${eventName}Event`](payload, connection)
+        this[eventName](payload, connection)
     }
 
     disconnectPlayer(connection) {
@@ -21,23 +21,25 @@ class MatchMakingServer {
             const key = entry[0]
             const value = entry[1]
             if (value === connection) {
-                this.playersConnections.delete(key)
                 this.#deletePlayer(key)
+                this.playersConnections.delete(key)
                 break
             }
         }
     }
 
-    playerConnectionEvent(payload, connection) {
+    // Event
+    connectPlayer(payload, connection) {
         try {
-            const player = this.#createPlayer(payload.id)
+            const player = this.#createPlayer(payload.playerId)
             this.#createPlayerConnection(player, connection)
         } catch(e) {
             console.error(e)
         }
     }
 
-    #joinPlayerToRoomEvent(player, payload = {}) {
+    // Event
+    #joinPlayerToRoom(player, payload = {}) {
         // Создать комнату если их нет
         if (!this.rooms.length) {
             const room = new Room(player)
@@ -67,14 +69,19 @@ class MatchMakingServer {
         }
     }
 
-    #joinPlayerToPublicLobbyEvent({ player }) { }
+    // Event
+    #joinPlayerToPublicLobby({ player }) { }
     
-    #joinPlayerToPrivateLobbyEvent({ player, payload = {} }) { }
-    
+    // Event
+    #joinPlayerToPrivateLobby({ player, payload = {} }) { }
+
+    // Event
     #createPrivateLobbyEvent({ player, payload = {} }) { }
 
+    // Event
     #startMatchEvent(player) { }
 
+    // Event
     #stopSearchEvent(player) { }
 
     #createPlayerConnection(player, connection) {
@@ -88,7 +95,7 @@ class MatchMakingServer {
     }
 
     #deletePlayer(player) {
-        const array = Array.from(this.playersConnections)
+        const array = Array.from(this.playersConnections.keys())
         const index = array.indexOf(player);
         this.players.splice(index, 1)
      }

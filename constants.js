@@ -1,12 +1,11 @@
 const EVENTS = {
-    PLAYER_CONNECTION: 'playerConnection',
-    PLAYER_DISCONNECTION: 'playerDisconnection',
-    JOIN_TO_PUBLIC_LOBBY: 'joinToPublicLobby',
-    JOIN_TO_PUBLIC_LOBBY: 'joinToPublicLobby',
-    JOIN_TO_PRIVATE_LOBBY: 'joinToPrivateLobby',
-    JOIN_TO_ROOM: 'joinToRoom',
+    CONNECT_PLAYER: 'connectPlayer',
+    DISCONNECTION_PLAYER: 'disconnectPlayer',
+    JOIN_JOIN_PLAYER_TO_PUBLIC_LOBBY: 'joinPlayerToPublicLobby',
+    JOIN_PLAYER_TO_PRIVATE_LOBBY: 'joinPlayerToPrivateLobby',
+    JOIN_PLAYER_TO_ROOM: 'joinPlayerToRoom',
     START_MATCH: 'startMatch',
-    STOP_SEARCH: 'stopSearch',
+    KICK_PLAYER_FROM_ROOM: 'stopSearch',
 }
 
 const MODE_PLAYERS_CNT = {

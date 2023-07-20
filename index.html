@@ -8,7 +8,7 @@
 </head>
 
 <body>
-    <input id="playersId" type="text">
+    <input id="playersId" type="text" disabled>
     <br>
     <input id="version" type="text" value="1.0.0">
     <br>
@@ -56,17 +56,32 @@ const stopSearch = document.querySelector('#stopSearch')
 const joinToPublicLobby = document.querySelector('#joinToPublicLobby')
 const joinToPrivateLobby  = document.querySelector('#joinToPrivateLobby')
 
+const CLIENT_EVENTS = {
+    playerConnection: {
+        eventName: 'connectPlayer',
+        payload: { playerId: null },
+    },
+
+    joinPlayerToRoom: {
+        eventName: 'joinPlayerToRoom',
+        payload: {
+            playerId: null,
+            version: null,
+            hasBots: null,
+            gameMode: null,
+            map: null,
+        },
+    }
+}
+
+playerId.value = Date.now()
+
 // CONNECTION
 socket.onopen = () => {
-    const rnd = Math.round(Math.random() * (999 - 100) + 100);
-    playerId.value = rnd
-
-    socket.send(JSON.stringify({
-        eventName: 'playerConnection',
-        payload: {
-            id: rnd
-        },
-    }))
+    let event = CLIENT_EVENTS.playerConnection
+    event.payload.playerId = playerId.value
+    event = JSON.stringify(event)
+    socket.send(event)
 };
 
 // MESSAGE
@@ -77,16 +92,8 @@ socket.onmessage = (event) => {
 
 // JOIN TO ROOM
 joinMatch.addEventListener('click', () => {
-    socket.send(JSON.stringify({
-        eventName: 'joinToRoom',
-        payload: {
-            playerId: playerId.value,
-            version: version.value,
-            hasBots: hasBots.value,
-            gameMode: gameMode.value,
-            map: map.value,
-        },
-    }))
+    let event = CLIENT_EVENTS.playerConnection
+    socket.send(JSON.stringify())
 })
 
 // JOIN TO PUBLIC LOBBY
@@ -150,5 +157,14 @@ socket.onerror = function(error) {
 };
 
 </script>
+<style>
+    body {
+        margin-top: 50px;
+    }
 
-</html>
+    body input[type=button],
+    body input[type=text] {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+</style>
