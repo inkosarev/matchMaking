@@ -12,31 +12,31 @@
     <br>
     <input id="version" type="text" value="1.0.0">
     <br>
-    <span>map</span>
+    <!-- <span>map</span>
     <select name="settings" id="map">
         <option value="ztn" selected>ztn</option>
         <option value="dm6">dm6</option>
         <option value="t4">t4</option>
-    </select>
+    </select> -->
     <br>
-    <span>mode</span>
-    <select name="settings" id="gameMode">
+    <!-- <span>mode</span> -->
+    <!-- <select name="settings" id="gameMode">
         <option value="dm" selected>dm</option>
         <option value="tdm">tdm</option>
         <option value="td">td</option>
-    </select>
+    </select> -->
     <br>
-    <span>bots:</span><input type="checkbox" id="hasBots">
+    <!-- <span>bots:</span><input type="checkbox" id="hasBots"> -->
     <br>
-    <input id="joinMatch" type="button" value="join match">
+    <!-- <input id="startMatch" type="button" value="start Match "> -->
     <br>
-    <input id="startMatch" type="button" value="start match ">
+    <!-- <input id="stopSearch" type="button" value="stop Search"> -->
     <br>
-    <input id="stopSearch" type="button" value="stop search">
+    <input id="joinPlayerToPublicLobby" type="button" value="join To Public Lobby">
     <br>
-    <input id="joinToPublicLobby" type="button" value="join To Public Lobby">
+    <!-- <input id="joinPlayerToPrivateLobby" type="button" value="join To Private Lobby"> -->
     <br>
-    <input id="joinToPrivateLobby" type="button" value="join To Private Lobby">
+    <input id="leavePlayerFromPublicLobby" type="button" value="leave Player From Public Lobby">
 </body>
 
 <script>
@@ -50,20 +50,34 @@ const hasBots = document.querySelector('#hasBots')
 const gameMode = document.querySelector('#gameMode')
 const map = document.querySelector('#map')
 
-const joinMatch = document.querySelector('#joinMatch')
 const startMatch = document.querySelector('#startMatch')
 const stopSearch = document.querySelector('#stopSearch')
-const joinToPublicLobby = document.querySelector('#joinToPublicLobby')
-const joinToPrivateLobby  = document.querySelector('#joinToPrivateLobby')
+const joinPlayerToPublicLobby = document.querySelector('#joinPlayerToPublicLobby')
+const joinPlayerToPrivateLobby = document.querySelector('#joinPlayerToPrivateLobby')
+const leavePlayerFromPublicLobby = document.querySelector('#leavePlayerFromPublicLobby')
 
 const CLIENT_EVENTS = {
-    playerConnection: {
+    connectPlayer: {
         eventName: 'connectPlayer',
         payload: { playerId: null },
     },
 
+    joinPlayerToPublicLobby: {
+        eventName: 'joinPlayerToPublicLobby',
+        payload: {
+            playerId: null,
+        },
+    },
+    
+    leavePlayerFromPublicLobby: {
+        eventName: 'leavePlayerFromPublicLobby',
+        payload: {
+            playerId: null,
+        },
+    },
+
     joinPlayerToRoom: {
-        eventName: 'joinPlayerToRoom',
+        eventName: 'joinPlayerToPublicLobby',
         payload: {
             playerId: null,
             version: null,
@@ -78,7 +92,7 @@ playerId.value = Date.now()
 
 // CONNECTION
 socket.onopen = () => {
-    let event = CLIENT_EVENTS.playerConnection
+    let event = CLIENT_EVENTS.connectPlayer
     event.payload.playerId = playerId.value
     event = JSON.stringify(event)
     socket.send(event)
@@ -90,32 +104,23 @@ socket.onmessage = (event) => {
     console.log(data)
 };
 
-// JOIN TO ROOM
-joinMatch.addEventListener('click', () => {
-    let event = CLIENT_EVENTS.playerConnection
-    socket.send(JSON.stringify())
+// JOIN TO PUBLIC LOBBY 
+joinPlayerToPublicLobby.addEventListener('click', () => {
+    let event = CLIENT_EVENTS.joinPlayerToPublicLobby
+    event.payload.playerId = playerId.value,
+    socket.send(JSON.stringify(event))
 })
 
-// JOIN TO PUBLIC LOBBY
-joinToPublicLobby.addEventListener('click', () => {
-    socket.send(JSON.stringify({
-        eventName: 'joinToPublicLobby',
-        payload: {
-            playerId: playerId.value,
-            version: version.value,
-        },
-    }))
+// LEAVE PLAYER FROM PUBLIC LOBBY
+leavePlayerFromPublicLobby.addEventListener('click', () => {
+    let event = CLIENT_EVENTS.leavePlayerFromPublicLobby
+    event.payload.playerId = playerId.value,
+    socket.send(JSON.stringify(event))
 })
 
 // JOIN TO PRIVATE LOBBY
 joinToPrivateLobby.addEventListener('click', () => {
-    socket.send(JSON.stringify({
-        eventName: 'joinToPrivateLobby',
-        payload: {
-            playerId: playerId.value,
-            version: version.value,
-        },
-    }))
+
 })
 
 // START

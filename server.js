@@ -38,6 +38,7 @@ ws.on('request', req => {
         const dataName = message.type + 'Data'
         const data = message[dataName]
         const requestData = JSON.parse(data)
+
         console.log(requestData)
         matchMaking.eventHandler(requestData, connection)
     })
