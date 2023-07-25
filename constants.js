@@ -1,14 +1,3 @@
-const EVENTS = {
-    CONNECT_PLAYER: 'connectPlayer',
-    DISCONNECTION_PLAYER: 'disconnectPlayer',
-    JOIN_PLAYER_TO_PUBLIC_LOBBY: 'joinPlayerToPublicLobby',
-    JOIN_PLAYER_TO_PRIVATE_LOBBY: 'joinPlayerToPrivateLobby',
-    JOIN_PLAYER_TO_ROOM: 'joinPlayerToRoom',
-    START_MATCH: 'startMatch',
-    KICK_PLAYER_FROM_ROOM: 'stopSearch',
-    LEAVE_PLAYER_FROM_PUBLIC_LOBBY: 'leavePlayerFromPublicLobby',
-}
-
 const MODE_PLAYERS_CNT = {
     'tdm': 6,
     'dm': 10,
@@ -17,6 +6,22 @@ const MODE_PLAYERS_CNT = {
 
 const LOBBYS_SETTINGS = {
     maxPlayers: 10
+}
+
+const STATUS = {
+    success: 'success',
+    fail: 'fail',
+}
+
+const EVENTS = {
+    CONNECT_PLAYER: 'connectPlayer',
+    DISCONNECT_PLAYER: 'disconnectPlayer',
+    JOIN_PLAYER_TO_PUBLIC_LOBBY: 'joinPlayerToPublicLobby',
+    JOIN_PLAYER_TO_PRIVATE_LOBBY: 'joinPlayerToPrivateLobby',
+    JOIN_PLAYER_TO_ROOM: 'joinPlayerToRoom',
+    FIND_MATCH: 'findMatch',
+    KICK_PLAYER_FROM_ROOM: 'stopSearch',
+    LEAVE_PLAYER_FROM_PUBLIC_LOBBY: 'leavePlayerFromPublicLobby',
 }
 
 const CLIENT_EVENTS = {
@@ -40,7 +45,7 @@ const CLIENT_EVENTS = {
     },
 
     joinPlayerToRoom: {
-        eventName: 'joinPlayerToPublicLobby',
+        eventName: 'joinPlayerToRoom',
         payload: {
             playerId: null,
             version: null,
@@ -56,45 +61,5 @@ module.exports = {
     MODE_PLAYERS_CNT,
     LOBBYS_SETTINGS,
     CLIENT_EVENTS,
+    STATUS,
 }
-
-// RESPONSE
-// {
-//     event: 'handShake'
-//     payload: {}
-// }
-
-// REQUEST
-
-// {
-//     eventName: "joinPlayerToRoom",
-//     payload: {
-//         playerId,
-//         version,
-//         hasBots,
-//         gameMode,
-//         map,
-//     }
-// }
-
-// {
-//     eventName: "joinPlayerToPublicLobby",
-//     payload: {
-//         playerId,
-//         version,
-//     }
-// }
-
-// {
-//     eventName: "joinPlayerToPrivateLobby",
-//     payload: {
-//         playerId,
-//         version,
-//         code,
-//     }
-// }
-
-// {
-//     eventName: "otherEvents",
-//     payload: {}
-// }

@@ -12,23 +12,23 @@
     <br>
     <input id="version" type="text" value="1.0.0">
     <br>
-    <!-- <span>map</span>
+    <span>map</span>
     <select name="settings" id="map">
         <option value="ztn" selected>ztn</option>
         <option value="dm6">dm6</option>
         <option value="t4">t4</option>
-    </select> -->
+    </select>
     <br>
-    <!-- <span>mode</span> -->
-    <!-- <select name="settings" id="gameMode">
+    <span>mode</span>
+    <select name="settings" id="gameMode">
         <option value="dm" selected>dm</option>
         <option value="tdm">tdm</option>
         <option value="td">td</option>
-    </select> -->
+    </select>
     <br>
-    <!-- <span>bots:</span><input type="checkbox" id="hasBots"> -->
+    <span>bots:</span><input type="checkbox" id="hasBots">
     <br>
-    <!-- <input id="startMatch" type="button" value="start Match "> -->
+    <input id="findMatch" type="button" value="find Match ">
     <br>
     <!-- <input id="stopSearch" type="button" value="stop Search"> -->
     <br>
@@ -50,7 +50,7 @@ const hasBots = document.querySelector('#hasBots')
 const gameMode = document.querySelector('#gameMode')
 const map = document.querySelector('#map')
 
-const startMatch = document.querySelector('#startMatch')
+const findMatch = document.querySelector('#findMatch')
 const stopSearch = document.querySelector('#stopSearch')
 const joinPlayerToPublicLobby = document.querySelector('#joinPlayerToPublicLobby')
 const joinPlayerToPrivateLobby = document.querySelector('#joinPlayerToPrivateLobby')
@@ -77,7 +77,7 @@ const CLIENT_EVENTS = {
     },
 
     joinPlayerToRoom: {
-        eventName: 'joinPlayerToPublicLobby',
+        eventName: 'joinPlayerToRoom',
         payload: {
             playerId: null,
             version: null,
@@ -118,30 +118,34 @@ leavePlayerFromPublicLobby.addEventListener('click', () => {
     socket.send(JSON.stringify(event))
 })
 
-// JOIN TO PRIVATE LOBBY
-joinToPrivateLobby.addEventListener('click', () => {
-
-})
-
 // START
-startMatch.addEventListener('click', () => {
+findMatch.addEventListener('click', () => {
     socket.send(JSON.stringify({
-        eventName: 'startMatch',
+        eventName: 'findMatch',
         payload: {
-            playerId: playerId.value,
+            playerId: playerId.value, 
+            version: version.value,
+            hasBots: hasBots.value,
+            gameMode: gameMode.value,
+            map: map.value,
         },
     }))
 })
+
+// JOIN TO PRIVATE LOBBY
+// joinPlayerToPrivateLobby.addEventListener('click', () => {
+
+// })
 
 // STOP SEARCH
-stopSearch.addEventListener('click', () => {
-    socket.send(JSON.stringify({
-        event: 'stopSearch',
-        data: {
-            playerId: playerId.value,
-        },
-    }))
-})
+// stopSearch.addEventListener('click', () => {
+//     socket.send(JSON.stringify({
+//         event: 'stopSearch',
+//         data: {
+//             playerId: playerId.value,
+//         },
+//     }))
+// })
 
 socket.onmessage = (event) => {
     const data = JSON.parse(event.data)
