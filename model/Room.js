@@ -1,46 +1,50 @@
 class Room {
     id
-    map
-    gameMode
-    filter
     players = []
+    _isLocked = false
+    map
+    filter
 
-    constructor(player) {
+    constructor(payload) {
         this.id = Date.now()
-        this.players.push(player)
-        this.filter = player.filter
-        this.gameMode = player.filter.gameMode
-        this.map = player.filter.map
-    }
-    
-    serialize() {
-        return {
-            id: this.id,
-            map: this.map,
-            gameMode: this.gameMode,
-            playersCount: this.playersCount(),
-            maxPlayers: this.maxPlayers(),
+        this.map = payload.map,
+        this.filter = {
+            gameMode: payload.gameMode,
+            hasBots: payload.hasBots,
+            version: payload.version,
         }
     }
+    
+    addPlayer(player) {
+        this.players.push(player)
+    }
 
-    #playersCount() {
+    lock() {
+        this.isLocked = true
+    }
+
+    unlock() {
+        this.isLocked = false
+    }
+
+    playersCount() {
         return this.players.length
     }
 
-    #maxPlayers() {
-        return MODE_PLAYERS_CNT[this.mode]
+    maxPlayers() {
+        return MODE_PLAYERS_CNT[this.filter.gameModemode]
     }
 
-    #isLocked() {
-        return false
+    isLocked() {
+        return this._isLocked
     }
 
-    #isFull() {
-        this.maxPlayers == this.playersCount
+    isFull() {
+        this.maxPlayers === this.playersCount
     }
 
-    #isAvailable() {
-        return !this.isFull && !this.isLocked
+    isAvailable() {
+        return !this.isFull() && !this.isLocked()
     }
 }
 

@@ -4,7 +4,7 @@ const MODE_PLAYERS_CNT = {
     'td': 4,
 }
 
-const LOBBYS_SETTINGS = {
+const LOBBY_SETTINGS = {
     maxPlayers: 10
 }
 
@@ -22,6 +22,10 @@ const EVENTS = {
     FIND_MATCH: 'findMatch',
     KICK_PLAYER_FROM_ROOM: 'stopSearch',
     LEAVE_PLAYER_FROM_PUBLIC_LOBBY: 'leavePlayerFromPublicLobby',
+}
+
+const RESPONSE = {
+
 }
 
 const CLIENT_EVENTS = {
@@ -44,14 +48,13 @@ const CLIENT_EVENTS = {
         },
     },
 
-    joinPlayerToRoom: {
-        eventName: 'joinPlayerToRoom',
+    findMatch: {
+        eventName: 'findMatch',
         payload: {
             playerId: null,
             version: null,
             hasBots: null,
             gameMode: null,
-            map: null,
         },
     }
 }
@@ -59,7 +62,8 @@ const CLIENT_EVENTS = {
 module.exports = {
     EVENTS,
     MODE_PLAYERS_CNT,
-    LOBBYS_SETTINGS,
+    LOBBY_SETTINGS,
     CLIENT_EVENTS,
     STATUS,
+    RESPONSE,
 }

@@ -4,7 +4,8 @@ const {
     STATUS,
 } = require('../constants.js')
 
-const {  } = require('../constants.js')
+const { Filter } = require('./Filter.js')
+const { Room } = require('./Room.js')
 const { Player } = require('./Player.js')
 const { PublicLobby } = require('./PublicLobby.js')
 
@@ -125,15 +126,40 @@ class MatchMakingServer {
     joinPlayerToPrivateLobby(payload) { }
 
     // Event
-    createPrivateLobbyEvent(payload) { }
+    createPrivateLobby(payload) { }
 
     // Event
-    findMatchEvent(payload) {
-        
+    findMatch(payload, connection) {
+        let room
+        const { gameMode, hasBots, version, playerId } = payload
+        const player = this.players.filter(player => player.id === playerId)[0]
+        player.filter = new Filter(gameMode, hasBots, version)
+
+        if (!this.rooms.length) {
+            room = new Room(payload)
+            room.addPlayer(player)
+            this.addRoom(room)
+        } else {
+            let relevantRooms = this.rooms.filter(room => {
+                return this.compareFilters(room, player) && !room.isLocked() && !room.isFull()
+            })
+
+            if (relevantRooms.length) {
+                room = relevantRooms[0]
+                room.addPlayer(player)
+            } else {
+                room = new Room(payload)
+                room.addPlayer(player)
+                this.addRoom(room)
+            }
+        }
+        const response = this.createResponseMessage('findMatch', STATUS.success, { roomId: room.id })
+        this.notifyPlayersInRoom('playerFindMatch', room, player)
+        connection.send(response)
     }
 
     // Event
-    stopSearchEvent(payload) { }
+    stopSearch(payload) { }
 
     createPlayerConnection(player, connection) {
         this.playersConnections.set(player, connection)
@@ -157,6 +183,10 @@ class MatchMakingServer {
         return lobby
     }
 
+    addRoom(room) {
+        this.rooms.push(room)
+    }
+
     deletePublicLobby() { }
 
     createPrivateLobby() { }
@@ -167,36 +197,6 @@ class MatchMakingServer {
 
     deleteRoom(room) { }
  
-    addPlayerToRoom(player, connection) {
-        // Создать комнату если их нет
-        if (!this.rooms.length) {
-            const room = new Room(player)
-            this.rooms.push(room)
-
-            const event = {
-                type: 'join',
-                status: 'success',
-            }
-            this.notifyPlayersInRoom(event, room) // Оповестить игроков 
-        } else {
-            // Выбрать подходящие игроку комнаты
-            let relevantRooms = this.rooms.filter(room => {
-                //TO DO не надо фильтровать по карте
-                return (JSON.stringify(room.filter) === JSON.stringify(player.filter) && room.isAvailable())
-            })
-
-            if (relevantRooms.length) {
-            // Если таковые есть поместить в первую из них игрока
-                if (!relevantRooms[0].isLocked && !rel) {
-                    relevantRooms[0].rooms.push(player)
-                }
-            } else {
-            // Если таковых нет создать новую
-                this.rooms.push(new Room(player))
-            }
-        }
-    }
-
     addPlayerToLobby() { }
 
     getRoomsByPlayerId(playerId) { }
@@ -207,6 +207,7 @@ class MatchMakingServer {
         const playerFilter = player.filter
 
         for (let prop in roomFilter) {
+            if (prop === 'map') return
             if (playerFilter[prop] != roomFilter[prop]) result = false
         }
 
@@ -221,6 +222,7 @@ class MatchMakingServer {
 
     notifyPlayersInLobby(eventName, lobby, player) {
         lobby.players.forEach(p => {
+            if (p.id === player.id) return
             this.playersConnections.get(p).send(JSON.stringify({
                 eventName: eventName,
                 status: STATUS.success,
@@ -231,11 +233,16 @@ class MatchMakingServer {
         })
     }
 
-    // Отправить всем игрокам в комнате событие
-    notifyPlayersInRoom(event, room) {
-       room.players.forEach(player => {
-        this.playersConnections.get(player)
-        .send(JSON.stringify({ event, room }))
+    notifyPlayersInRoom(eventName, room, player) {
+        room.players.forEach(p => {
+            if (p.id === player.id) return
+            this.playersConnections.get(p).send(JSON.stringify({
+                eventName: eventName,
+                status: STATUS.success,
+                payload: {
+                    msg: `Player ${player.id} has joined the room`
+                }
+            }))
        });
     }
 

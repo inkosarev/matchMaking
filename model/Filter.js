@@ -2,12 +2,10 @@ class Filter {
     version
     gameMode
     hasBots
-    map
-    constructor({ version, gameMode, hasBots, map }) {
-        this.version = version
+    constructor(gameMode, hasBots, version) {
         this.gameMode = gameMode
         this.hasBots = hasBots
-        this.map = map
+        this.version = version
     }
 }
 

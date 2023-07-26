@@ -12,13 +12,6 @@
     <br>
     <input id="version" type="text" value="1.0.0">
     <br>
-    <span>map</span>
-    <select name="settings" id="map">
-        <option value="ztn" selected>ztn</option>
-        <option value="dm6">dm6</option>
-        <option value="t4">t4</option>
-    </select>
-    <br>
     <span>mode</span>
     <select name="settings" id="gameMode">
         <option value="dm" selected>dm</option>
@@ -48,7 +41,6 @@ const playerId = document.querySelector('#playersId')
 const version = document.querySelector('#version')
 const hasBots = document.querySelector('#hasBots')
 const gameMode = document.querySelector('#gameMode')
-const map = document.querySelector('#map')
 
 const findMatch = document.querySelector('#findMatch')
 const stopSearch = document.querySelector('#stopSearch')
@@ -76,14 +68,13 @@ const CLIENT_EVENTS = {
         },
     },
 
-    joinPlayerToRoom: {
-        eventName: 'joinPlayerToRoom',
+    findMatch: {
+        eventName: 'findMatch',
         payload: {
             playerId: null,
             version: null,
             hasBots: null,
             gameMode: null,
-            map: null,
         },
     }
 }
@@ -127,7 +118,6 @@ findMatch.addEventListener('click', () => {
             version: version.value,
             hasBots: hasBots.value,
             gameMode: gameMode.value,
-            map: map.value,
         },
     }))
 })

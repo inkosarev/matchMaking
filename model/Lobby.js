@@ -1,4 +1,4 @@
-const { LOBBYS_SETTINGS } = require('../constants.js')
+const { LOBBY_SETTINGS } = require('../constants.js')
 
 class Lobby {
     id
@@ -38,10 +38,6 @@ class Lobby {
 
     setHost(player) {
         this.host = player
-    }
-
-    lock() {
-        this.isLocked = true
     }
 
     playersCount() {
