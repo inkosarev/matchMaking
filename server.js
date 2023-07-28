@@ -1,4 +1,3 @@
-'use strict'
 const WebSocket = require('websocket').server
 const http = require('http')
 
@@ -14,21 +13,16 @@ const server = http.createServer((req, res) => {
             publicLobbys: matchMaking.publicLobbys,
             privateLobbys: matchMaking.privateLobbys,
             players: matchMaking.players,
-            playersConnections: Array.from(matchMaking.playersConnections.keys())
+            // playersConnections: Array.from(matchMaking.playersConnections.keys())
         }))
       } else {
         res.end("go to /admin")
       }
 })
 
-server.listen(8000, () => {
-    console.log('Listen port 8000')
-})
+server.listen(8000, () => { console.log('Listen port 8000') })
 
-const ws = new WebSocket({
-    httpServer: server,
-    autoAcceptConnections: false,
-})
+const ws = new WebSocket({ httpServer: server, autoAcceptConnections: false, })
 
 ws.on('request', req => {
     const connection = req.accept('', req.origin)

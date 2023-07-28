@@ -4,8 +4,13 @@ const MODE_PLAYERS_CNT = {
     'td': 4,
 }
 
+const EVENT_TYPE ={
+    response: 'response',
+    notification: 'notification',
+}
+
 const LOBBY_SETTINGS = {
-    maxPlayers: 10
+    maxPlayers: 10,
 }
 
 const STATUS = {
@@ -13,22 +18,20 @@ const STATUS = {
     fail: 'fail',
 }
 
-const EVENTS = {
-    CONNECT_PLAYER: 'connectPlayer',
-    DISCONNECT_PLAYER: 'disconnectPlayer',
-    JOIN_PLAYER_TO_PUBLIC_LOBBY: 'joinPlayerToPublicLobby',
-    JOIN_PLAYER_TO_PRIVATE_LOBBY: 'joinPlayerToPrivateLobby',
-    JOIN_PLAYER_TO_ROOM: 'joinPlayerToRoom',
-    FIND_MATCH: 'findMatch',
-    KICK_PLAYER_FROM_ROOM: 'stopSearch',
-    LEAVE_PLAYER_FROM_PUBLIC_LOBBY: 'leavePlayerFromPublicLobby',
+const EVENT = {
+    connectPlayer: 'connectPlayer',
+    disconnectPlayer: 'disconnectPlayer',
+    joinPlayerToPublicLobby: 'joinPlayerToPublicLobby',
+    joinPlayerToPrivateLobby: 'joinPlayerToPrivateLobby',
+    leavePlayerFromPublicLobby: 'leavePlayerFromPublicLobby',
+    leavePlayerFromPrivateLobby: 'leavePlayerFromPrivateobby',
+    joinPlayerToRoom: 'joinPlayerToRoom',
+    leavePlayerFromRoom: 'leavePlayerFromRoom',
+    findMatch: 'findMatch',
+    stopSearch: 'stopSearch',
 }
 
-const RESPONSE = {
-
-}
-
-const CLIENT_EVENTS = {
+const CLIENT_EVENT = {
     connectPlayer: {
         eventName: 'connectPlayer',
         payload: { playerId: null },
@@ -56,14 +59,50 @@ const CLIENT_EVENTS = {
             hasBots: null,
             gameMode: null,
         },
-    }
+    },
+
+    stopSearch: {
+        eventName: 'stopSearch',
+        payload: {
+            playerId: null,
+        },
+    },
+
+    joinPlayerToPrivateLobby: {
+        eventName: 'joinPlayerToPrivateLobby',
+        payload: {
+            code: null,
+            playerId: null,
+        },
+    },
+    
+    leavePlayerFromPrivateLobby: {
+        eventName: 'leavePlayerFromPrivateLobby',
+        payload: {
+            playerId: null,
+        },
+    },
+
+    joinPlayerToRoom: {
+        eventName: 'joinPlayerToRoom',
+        payload: {
+            playerId: null,
+        },
+    },
+
+    leavePlayerFromRoom: {
+        eventName: 'leavePlayerFromRoom',
+        payload: {
+            playerId: null,
+        },
+    },
 }
 
 module.exports = {
-    EVENTS,
+    EVENT,
     MODE_PLAYERS_CNT,
     LOBBY_SETTINGS,
-    CLIENT_EVENTS,
+    CLIENT_EVENT,
     STATUS,
-    RESPONSE,
+    EVENT_TYPE,
 }

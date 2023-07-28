@@ -1,7 +1,7 @@
 class Player {
     id
     filter
-    lastRoom
+    lastRoomId
     constructor(id, filter = {}) {
         this.id = id
         this.filter = filter
@@ -11,8 +11,8 @@ class Player {
         this.filter = filter
     }
 
-    setLastRoom(room) {
-        this.lastRoom = room
+    setLastRoomId(roomId) {
+        this.lastRoomId = roomId
     }
 }
 

@@ -1,13 +1,16 @@
 const {
-    EVENTS,
-    CLIENT_EVENTS,
+    EVENT,
+    CLIENT_EVENT,
     STATUS,
+    EVENT_TYPE,
 } = require('../constants.js')
 
 const { Filter } = require('./Filter.js')
 const { Room } = require('./Room.js')
 const { Player } = require('./Player.js')
 const { PublicLobby } = require('./PublicLobby.js')
+const { PrivateLobby } = require('./PrivateLobby.js')
+const { ServerEvent } = require('./ServerEvent.js')
 
 class MatchMakingServer {
     players = []
@@ -17,27 +20,19 @@ class MatchMakingServer {
     playersConnections = new Map()
 
     eventHandler(event, connection) {
-            const { eventName, payload } = event
+        const { eventName, payload } = event
         if (this.validateEventData(event, connection)) {
             this[(eventName)](payload, connection)
         } else {
-            const response = this.createResponseMessage(eventName, STATUS.fail, payload)
-            connection.send(response)
+            const response = new ServerEvent(eventName, EVENT_TYPE.response, STATUS.fail)
+            connection.send(JSON.stringify(response))
         }
     }
     
-    createResponseMessage(eventName, status, payload) {
-        return JSON.stringify({
-            eventName,
-            status,
-            payload,
-        })
-    }
-
     validateEventData(event, connection) {
         let result = true
-        if (!Object.values(EVENTS).includes(event.eventName)) return false
-        const eventTemplate = CLIENT_EVENTS[event.eventName]
+        if (!Object.values(EVENT).includes(event.eventName)) return false
+        const eventTemplate = CLIENT_EVENT[event.eventName]
         if (event.payload) {
             for (let prop in eventTemplate.payload) {
                 if (!(prop in event.payload)) {
@@ -48,8 +43,13 @@ class MatchMakingServer {
         }
 
         if (!result) {
-            const response = this.createResponseMessage(event.eventName, STATUS.fail, { msg: "Invalid data" })
-            connection.send(response)
+            const response = new ServerEvent(
+                event.eventName,
+                EVENT_TYPE.response,
+                STATUS.fail,
+                { msg: "Invalid data" }
+            )
+            connection.send(JSON.stringify(response))
         }
 
         return result
@@ -60,7 +60,7 @@ class MatchMakingServer {
             const key = entry[0]
             const value = entry[1]
             if (value === connection) {
-                this.leavePlayerFromPublicLobby({ playerId: key.id })
+                this.leavePlayerFromPublicLobby({ playerId: key.id }, connection)
                 this.deletePlayer(key)
                 this.playersConnections.delete(key)
                 break
@@ -68,16 +68,13 @@ class MatchMakingServer {
         }
     }
 
-    rejoinPlayerToMatch(playerId) {
-
-    }
-
     // Event
     connectPlayer(payload, connection) {
         try {
             const player = this.createPlayer(payload.playerId)
+            const response = new ServerEvent(EVENT.connectPlayer, EVENT_TYPE.response, STATUS.success)
             this.createPlayerConnection(player, connection)
-            connection.send(this.createResponseMessage('connectPlayer', STATUS.success, {}))
+            connection.send(JSON.stringify(response))
         } catch(e) {
             console.error(e)
         }
@@ -90,16 +87,18 @@ class MatchMakingServer {
         const player = this.players.filter(player => player.id === playerId)[0]
 
         const lobbys = this.publicLobbys
-            .filter(lobby => {
-                const isFull = lobby.isFull()
-                const isLocked = lobby.isLocked()
-                return !isFull && !isLocked
-            })
+            .filter(lobby => !lobby.isFull())
             .sort((a, b) => b.players.length - a.players.length)
         
         if (lobbys.length) {
+            const notification = new ServerEvent(
+                EVENT.joinPlayerToPublicLobby,
+                EVENT_TYPE.notification,
+                STATUS.success,
+                { player }
+            )
             lobbys[0].addPlayer(player)
-            this.notifyPlayersInLobby('playerJoinToLobby', lobbys[0], player)
+            this.notifyPlayersInLobby(notification, lobbys[0], player)
             lobbyId = lobbys[0].id
         } else {
             const lobby = this.createPublicLobby()
@@ -107,26 +106,106 @@ class MatchMakingServer {
             lobbyId = lobby.id
         }
 
-        const response = this.createResponseMessage('joinPlayerToPublicLobby', STATUS.success, { lobbyId })
-        connection.send(response)
+        const response = new ServerEvent(
+            EVENT.joinPlayerToPublicLobby,
+            EVENT_TYPE.response,
+            STATUS.success,
+            { lobbyId }
+        )
+
+        connection.send(JSON.stringify(response))
     }
 
     // Event
-    leavePlayerFromPublicLobby(payload) {
+    leavePlayerFromPublicLobby(payload, connection) {
         const { playerId } = payload
         const player = this.players.filter(player => player.id === playerId)[0]
         const lobbys = this.publicLobbys.filter(lobby => lobby.hasPlayer(player))
+        
+        const notification = new ServerEvent(
+            EVENT.leavePlayerFromPrivateLobby,
+            EVENT_TYPE.notification,
+            STATUS.success, 
+        )
+
+        const response = new ServerEvent(
+            EVENT.leavePlayerFromPrivateLobby,
+            EVENT_TYPE.response,
+            STATUS.success, 
+        )
+
+        connection.send(JSON.stringify(response))
         lobbys.forEach(lobby => { 
-            this.notifyPlayersInLobby("playerLeaveLobby", lobby, player)
             lobby.kickPlayer(player)
+            this.notifyPlayersInLobby(notification, lobby, player)
         })
     }
-    
-    // Event
-    joinPlayerToPrivateLobby(payload) { }
 
     // Event
-    createPrivateLobby(payload) { }
+    rejoinPlayerToMatch(payload, connection) { }
+
+    // Event
+    joinPlayerToPrivateLobby(payload, connection) {
+        const { playerId, code } = payload
+        const player = this.players.filter(player => player.id === playerId)[0]
+        const lobby = this.privateLobbys.filter(lobby => lobby.code === code)[0]
+        if (lobby) {
+            lobby.addPlayer(player)
+
+            const response = new ServerEvent(
+                EVENT.joinPlayerToPrivateLobby,
+                EVENT_TYPE.response,
+                STATUS.success,
+                { lobbyId: lobby.id }
+            )
+    
+            const notification = new ServerEvent(
+                EVENT.joinPlayerToPrivateLobby,
+                EVENT_TYPE.notification,
+                STATUS.success,
+                {
+                    player,
+                    msg: `Player has joined the lobby`,
+                }
+            )
+            
+            connection.send(JSON.stringify(response))
+            this.notifyPlayersInLobby(notification, lobby, player)
+        } else {
+            const response = new ServerEvent(
+                EVENT.joinPlayerToPrivateLobby,
+                EVENT_TYPE.response,
+                STATUS.fail,
+                {
+                    code,
+                    msg: "Invalid code",
+                }
+            )
+    
+            connection.send(JSON.stringify(response))
+        }
+    }
+
+    // Event
+    createPrivateLobby(payload, connection) {
+        const { playerId } = payload
+        const player = this.players.filter(player => player.id === playerId)[0]
+        const lobby = new PrivateLobby()
+        this.privateLobbys.push(lobby)
+        lobby.addPlayer(player)
+        
+        const response = new ServerEvent(
+            EVENT.createPrivateLobby,
+            EVENT_TYPE.response,
+            STATUS.success,
+            {
+                lobbyId: lobby.id,
+                code: lobby.code,
+            }
+        )
+
+        connection.send(JSON.stringify(response))
+    }
 
     // Event
     findMatch(payload, connection) {
@@ -153,13 +232,56 @@ class MatchMakingServer {
                 this.addRoom(room)
             }
         }
-        const response = this.createResponseMessage('findMatch', STATUS.success, { roomId: room.id })
-        this.notifyPlayersInRoom('playerFindMatch', room, player)
-        connection.send(response)
+
+        const response = new ServerEvent(
+            EVENT.findMatch,
+            EVENT_TYPE.response,
+            STATUS.success,
+            { roomId: room.id }
+        )
+
+        const notification = new ServerEvent(
+            EVENT.findMatch,
+            EVENT_TYPE.notification,
+            STATUS.success,
+            {
+                player,
+                msg: `Player has joined the room`,
+            }
+        )
+
+        connection.send(JSON.stringify(response))
+        this.notifyPlayersInRoom(notification, room, player)
     }
 
     // Event
-    stopSearch(payload) { }
+    stopSearch(payload, connection) {
+        const { playerId } = payload
+        const player = this.players.filter(p => p.id === playerId)
+        const rooms = this.rooms.filter(room => room.hasPlayer(player))
+
+        const response = new ServerEvent(
+            EVENT.stopSearch,
+            EVENT_TYPE.response,
+            STATUS.success,
+        )
+
+        const notification = new ServerEvent(
+            EVENT.stopSearch,
+            EVENT_TYPE.notification,
+            STATUS.success,
+            {
+                player,
+                msg: `Player has left the room`,
+            }
+        )
+
+        connection.send(JSON.stringify(response))
+        rooms.forEach(room => {
+            room.kickPlayer(player)
+            this.notifyPlayersInRoom(notification, room, player)
+        })
+    }
 
     createPlayerConnection(player, connection) {
         this.playersConnections.set(player, connection)
@@ -187,20 +309,21 @@ class MatchMakingServer {
         this.rooms.push(room)
     }
 
-    deletePublicLobby() { }
-
-    createPrivateLobby() { }
+    deletePublicLobby(lobby) {
+        const index = this.publicLobbys.indexOf(lobby);
+        this.publicLobbys.splice(index, 1)
+    }
     
-    deletePrivateLobby() { }
+    deletePrivateLobby(lobby) {
+        const index = this.privateLobbys.indexOf(lobby);
+        this.privateLobbys.splice(index, 1)
+    }
 
-    createRoom(player) { }
-
-    deleteRoom(room) { }
+    deleteRoom(room) {
+        const index = this.rooms.indexOf(room);
+        this.rooms.splice(index, 1)
+    }
  
-    addPlayerToLobby() { }
-
-    getRoomsByPlayerId(playerId) { }
-
     compareFilters(room, player) {
         let result = true
         const roomFilter = room.filter
@@ -220,36 +343,22 @@ class MatchMakingServer {
         })
     }
 
-    notifyPlayersInLobby(eventName, lobby, player) {
+    notifyPlayersInLobby(notification, lobby, player) {
         lobby.players.forEach(p => {
             if (p.id === player.id) return
-            this.playersConnections.get(p).send(JSON.stringify({
-                eventName: eventName,
-                status: STATUS.success,
-                payload: {
-                    msg: `Player ${player.id} has joined the lobby`
-                }
-            }))
+            this.playersConnections
+            .get(p)
+            .send(JSON.stringify(notification))
         })
     }
 
-    notifyPlayersInRoom(eventName, room, player) {
+    notifyPlayersInRoom(notification, room, player) {
         room.players.forEach(p => {
             if (p.id === player.id) return
-            this.playersConnections.get(p).send(JSON.stringify({
-                eventName: eventName,
-                status: STATUS.success,
-                payload: {
-                    msg: `Player ${player.id} has joined the room`
-                }
-            }))
+            this.playersConnections
+            .get(p)
+            .send(JSON.stringify(notification))
        });
-    }
-
-    getPlayerById(id) {
-        const players = Map.keys(this.playersConnections)
-        const player = players.filter(p => id === p.id)
-        return player.length ? player[0] : false
     }
 }
 

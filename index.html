@@ -23,13 +23,16 @@
     <br>
     <input id="findMatch" type="button" value="find Match ">
     <br>
-    <!-- <input id="stopSearch" type="button" value="stop Search"> -->
+    <input id="stopSearch" type="button" value="stop Search">
     <br>
     <input id="joinPlayerToPublicLobby" type="button" value="join To Public Lobby">
     <br>
-    <!-- <input id="joinPlayerToPrivateLobby" type="button" value="join To Private Lobby"> -->
+    <input id="code" type="text">
+    <input id="joinPlayerToPrivateLobby" type="button" value="join To Private Lobby">
     <br>
     <input id="leavePlayerFromPublicLobby" type="button" value="leave Player From Public Lobby">
+    <br>
+    <input id="leavePlayerFromPrivateLobby" type="button" value="leave Player From Private Lobby">
 </body>
 
 <script>
@@ -44,11 +47,15 @@ const gameMode = document.querySelector('#gameMode')
 
 const findMatch = document.querySelector('#findMatch')
 const stopSearch = document.querySelector('#stopSearch')
-const joinPlayerToPublicLobby = document.querySelector('#joinPlayerToPublicLobby')
-const joinPlayerToPrivateLobby = document.querySelector('#joinPlayerToPrivateLobby')
-const leavePlayerFromPublicLobby = document.querySelector('#leavePlayerFromPublicLobby')
 
-const CLIENT_EVENTS = {
+const joinPlayerToPublicLobby = document.querySelector('#joinPlayerToPublicLobby')
+const code = document.querySelector('#code')
+const joinPlayerToPrivateLobby = document.querySelector('#joinPlayerToPrivateLobby')
+
+const leavePlayerFromPublicLobby = document.querySelector('#leavePlayerFromPublicLobby')
+const leavePlayerFromPrivateLobby = document.querySelector('#leavePlayerFromPrivateLobby')
+
+const CLIENT_EVENT = {
     connectPlayer: {
         eventName: 'connectPlayer',
         payload: { playerId: null },
@@ -76,14 +83,50 @@ const CLIENT_EVENTS = {
             hasBots: null,
             gameMode: null,
         },
-    }
+    },
+
+    stopSearch: {
+        eventName: 'stopSearch',
+        payload: {
+            playerId: null,
+        },
+    },
+
+    joinPlayerToPrivateLobby: {
+        eventName: 'joinPlayerToPrivateLobby',
+        payload: {
+            code: null,
+            playerId: null,
+        },
+    },
+    
+    leavePlayerFromPrivateLobby: {
+        eventName: 'leavePlayerFromPrivateLobby',
+        payload: {
+            playerId: null,
+        },
+    },
+
+    joinPlayerToRoom: {
+        eventName: 'joinPlayerToRoom',
+        payload: {
+            playerId: null,
+        },
+    },
+
+    leavePlayerFromRoom: {
+        eventName: 'leavePlayerFromRoom',
+        payload: {
+            playerId: null,
+        },
+    },
 }
 
 playerId.value = Date.now()
 
 // CONNECTION
 socket.onopen = () => {
-    let event = CLIENT_EVENTS.connectPlayer
+    let event = CLIENT_EVENT.connectPlayer
     event.payload.playerId = playerId.value
     event = JSON.stringify(event)
     socket.send(event)
@@ -97,46 +140,46 @@ socket.onmessage = (event) => {
 
 // JOIN TO PUBLIC LOBBY 
 joinPlayerToPublicLobby.addEventListener('click', () => {
-    let event = CLIENT_EVENTS.joinPlayerToPublicLobby
-    event.payload.playerId = playerId.value,
+    let event = CLIENT_EVENT.joinPlayerToPublicLobby
+    event.payload.playerId = playerId.value
     socket.send(JSON.stringify(event))
 })
 
 // LEAVE PLAYER FROM PUBLIC LOBBY
 leavePlayerFromPublicLobby.addEventListener('click', () => {
-    let event = CLIENT_EVENTS.leavePlayerFromPublicLobby
-    event.payload.playerId = playerId.value,
+    let event = CLIENT_EVENT.leavePlayerFromPublicLobby
+    event.payload.playerId = playerId.value
     socket.send(JSON.stringify(event))
 })
 
-// START
-findMatch.addEventListener('click', () => {
-    socket.send(JSON.stringify({
-        eventName: 'findMatch',
-        payload: {
-            playerId: playerId.value, 
-            version: version.value,
-            hasBots: hasBots.value,
-            gameMode: gameMode.value,
-        },
-    }))
+// JOIN TO PRIVATE LOBBY
+joinPlayerToPrivateLobby.addEventListener('click', () => {
+    let event = CLIENT_EVENT.joinPlayerToPublicLobby
+    event.payload.playerId = playerId.value
+    socket.send(JSON.stringify(event))
 })
 
-// JOIN TO PRIVATE LOBBY
-// joinPlayerToPrivateLobby.addEventListener('click', () => {
+// LEAVE PLAYER FROM PRIVATE LOBBY
+joinPlayerToPrivateLobby.addEventListener('click', () => {
 
-// })
+})
+
+// FIND MATCH
+findMatch.addEventListener('click', () => {
+    let event = CLIENT_EVENT.findMatch
+    event.payload.playerId = playerId.value
+    event.payload.version = version.value
+    event.payload.hasBots = hasBots.value
+    event.payload.gameMode = gameMode.value
+    socket.send(JSON.stringify(event))
+})
 
 // STOP SEARCH
-// stopSearch.addEventListener('click', () => {
-//     socket.send(JSON.stringify({
-//         event: 'stopSearch',
-//         data: {
-//             playerId: playerId.value,
-//         },
-//     }))
-// })
-
+stopSearch.addEventListener('click', () => {
+    let event = CLIENT_EVENT.stopSearch
+    event.payload.playerId = playerId.value
+    socket.send(JSON.stringify(even))
+})
 socket.onmessage = (event) => {
     const data = JSON.parse(event.data)
     console.log(data)
@@ -159,11 +202,13 @@ socket.onerror = function(error) {
 <style>
     body {
         margin-top: 50px;
+        padding: 15px;
     }
 
     body input[type=button],
     body input[type=text] {
         width: 100%;
+        margin: 0 auto;
         margin-bottom: 5px;
     }
 </style>

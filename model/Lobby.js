@@ -1,4 +1,4 @@
-const { LOBBY_SETTINGS } = require('../constants.js')
+const { MODE_PLAYERS_CNT } = require('../constants.js')
 
 class Lobby {
     id
@@ -6,7 +6,7 @@ class Lobby {
     players = []
 
     constructor() {
-        this.id = Date.now()
+        this.id = Date.now().toString()
     }
 
     hasPlayer(player) {
@@ -45,11 +45,7 @@ class Lobby {
     }
 
     maxPlayers() {
-        return modePlayersCount[this.mode]
-    }
-
-    isLocked() {
-        return false
+        return MODE_PLAYERS_CNT[this.mode]
     }
 
     isFull() {

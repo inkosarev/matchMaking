@@ -6,7 +6,7 @@ class Room {
     filter
 
     constructor(payload) {
-        this.id = Date.now()
+        this.id = Date.now().toString()
         this.map = payload.map,
         this.filter = {
             gameMode: payload.gameMode,
@@ -16,6 +16,7 @@ class Room {
     }
     
     addPlayer(player) {
+        player.lastRoomId = this.id
         this.players.push(player)
     }
 
@@ -45,6 +46,11 @@ class Room {
 
     isAvailable() {
         return !this.isFull() && !this.isLocked()
+    }
+
+    kickPlayer(player) {
+        const index = this.players.indexOf(player);
+        this.players.splice(index, 1)
     }
 }
 
