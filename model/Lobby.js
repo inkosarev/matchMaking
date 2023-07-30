@@ -1,4 +1,4 @@
-const { MODE_PLAYERS_CNT } = require('../constants.js')
+const { MODE_PLAYERS_CNT, LOBBY_SETTINGS } = require('../constants.js')
 
 class Lobby {
     id
@@ -10,11 +10,7 @@ class Lobby {
     }
 
     hasPlayer(player) {
-        const result = !!this.players
-            .filter(p => JSON.stringify(p) === JSON.stringify(player))
-            .length
-        
-        return result
+        return !!this.players.filter(p => p.id === player.id).length
     }
 
     addPlayer(player) {
@@ -44,12 +40,8 @@ class Lobby {
         return this.players.length
     }
 
-    maxPlayers() {
-        return MODE_PLAYERS_CNT[this.mode]
-    }
-
     isFull() {
-        this.maxPlayers == this.playersCount
+        return LOBBY_SETTINGS.maxPlayers === this.players.length
     }
 
     isEmpty() {

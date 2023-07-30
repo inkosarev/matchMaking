@@ -257,7 +257,7 @@ class MatchMakingServer {
     // Event
     stopSearch(payload, connection) {
         const { playerId } = payload
-        const player = this.players.filter(p => p.id === playerId)
+        const player = this.players.filter(p => p.id === playerId)[0]
         const rooms = this.rooms.filter(room => room.hasPlayer(player))
 
         const response = new ServerEvent(

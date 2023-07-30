@@ -178,7 +178,7 @@ findMatch.addEventListener('click', () => {
 stopSearch.addEventListener('click', () => {
     let event = CLIENT_EVENT.stopSearch
     event.payload.playerId = playerId.value
-    socket.send(JSON.stringify(even))
+    socket.send(JSON.stringify(event))
 })
 socket.onmessage = (event) => {
     const data = JSON.parse(event.data)

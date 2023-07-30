@@ -14,7 +14,11 @@ class Room {
             version: payload.version,
         }
     }
-    
+
+    hasPlayer(player) {
+        return !!this.players.filter(p => p.id === player.id).length
+    }
+
     addPlayer(player) {
         player.lastRoomId = this.id
         this.players.push(player)
