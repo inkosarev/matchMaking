@@ -1,4 +1,4 @@
-const WebSocket = require('websocket').server
+const WebSocketServer = require('websocket').server
 const http = require('http')
 
 const { MatchMakingServer } = require('./model/MatchMakingServer.js')
@@ -22,19 +22,25 @@ const server = http.createServer((req, res) => {
 
 server.listen(8000, () => { console.log('Listen port 8000') })
 
-const ws = new WebSocket({ httpServer: server, autoAcceptConnections: false, })
+const ws = new WebSocketServer({ httpServer: server, autoAcceptConnections: false, })
 
 ws.on('request', req => {
     const connection = req.accept('', req.origin)
 
     // Message
     connection.on('message', message => {
+        let requestData
         const dataName = message.type + 'Data'
         const data = message[dataName]
-        const requestData = JSON.parse(data)
-
-        console.log(requestData)
-        matchMaking.eventHandler(requestData, connection)
+        try {
+            if (!data || typeof data !== 'string') throw new Error('Invalid data')
+            requestData = JSON.parse(data)
+            console.log(requestData)
+            matchMaking.eventHandler(requestData, connection)
+        } catch(e) {
+            console.error(e)
+            connection.send(e)
+        }
     })
 
     // Close

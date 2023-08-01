@@ -4,7 +4,7 @@ const MODE_PLAYERS_CNT = {
     'td': 4,
 }
 
-const EVENT_TYPE ={
+const EVENT_TYPE = {
     response: 'response',
     notification: 'notification',
 }
@@ -18,26 +18,15 @@ const STATUS = {
     fail: 'fail',
 }
 
-const EVENT = {
-    connectPlayer: 'connectPlayer',
-    disconnectPlayer: 'disconnectPlayer',
-    joinPlayerToPublicLobby: 'joinPlayerToPublicLobby',
-    joinPlayerToPrivateLobby: 'joinPlayerToPrivateLobby',
-    leavePlayerFromPublicLobby: 'leavePlayerFromPublicLobby',
-    leavePlayerFromPrivateLobby: 'leavePlayerFromPrivateobby',
-    joinPlayerToRoom: 'joinPlayerToRoom',
-    leavePlayerFromRoom: 'leavePlayerFromRoom',
-    findMatch: 'findMatch',
-    stopSearch: 'stopSearch',
-}
-
 const CLIENT_EVENT = {
     connectPlayer: {
+        state: [],
         eventName: 'connectPlayer',
         payload: { playerId: null },
     },
 
     joinPlayerToPublicLobby: {
+        state: [0],
         eventName: 'joinPlayerToPublicLobby',
         payload: {
             playerId: null,
@@ -63,6 +52,13 @@ const CLIENT_EVENT = {
 
     stopSearch: {
         eventName: 'stopSearch',
+        payload: {
+            playerId: null,
+        },
+    },
+
+    createPrivateLobby: {
+        eventName: 'createPrivateLobby',
         payload: {
             playerId: null,
         },
@@ -99,7 +95,6 @@ const CLIENT_EVENT = {
 }
 
 module.exports = {
-    EVENT,
     MODE_PLAYERS_CNT,
     LOBBY_SETTINGS,
     CLIENT_EVENT,

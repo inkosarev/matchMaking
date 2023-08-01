@@ -1,3 +1,5 @@
+const { MODE_PLAYERS_CNT } = require('../constants')
+
 class Room {
     id
     players = []
@@ -37,7 +39,7 @@ class Room {
     }
 
     maxPlayers() {
-        return MODE_PLAYERS_CNT[this.filter.gameModemode]
+        return MODE_PLAYERS_CNT[this.filter.gameMode]
     }
 
     isLocked() {
@@ -45,7 +47,11 @@ class Room {
     }
 
     isFull() {
-        this.maxPlayers === this.playersCount
+        return this.maxPlayers() === this.playersCount()
+    }
+
+    isEmpty() {
+        return !this.players.length
     }
 
     isAvailable() {

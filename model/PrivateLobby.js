@@ -1,7 +1,7 @@
 const { Lobby } = require('./Lobby')
 
 class PrivateLobby extends Lobby {
-    code
+    code = ''
     constructor() {
         super()
         this.generateCode()

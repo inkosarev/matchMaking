@@ -1,5 +1,4 @@
 const {
-    EVENT,
     CLIENT_EVENT,
     STATUS,
     EVENT_TYPE,
@@ -31,8 +30,9 @@ class MatchMakingServer {
     
     validateEventData(event, connection) {
         let result = true
-        if (!Object.values(EVENT).includes(event.eventName)) return false
+        if (!Object.keys(CLIENT_EVENT).includes(event.eventName)) return false
         const eventTemplate = CLIENT_EVENT[event.eventName]
+        
         if (event.payload) {
             for (let prop in eventTemplate.payload) {
                 if (!(prop in event.payload)) {
@@ -57,12 +57,29 @@ class MatchMakingServer {
 
     disconnectPlayer(connection) {
         for (let entry of this.playersConnections) {
-            const key = entry[0]
-            const value = entry[1]
-            if (value === connection) {
-                this.leavePlayerFromPublicLobby({ playerId: key.id }, connection)
-                this.deletePlayer(key)
-                this.playersConnections.delete(key)
+            const player = entry[0]
+            const conn = entry[1]
+            
+            if (conn === connection) {
+                const rooms = this.rooms.filter(room => room.hasPlayer(player))
+                
+                const notification = new ServerEvent(
+                    CLIENT_EVENT.leavePlayerFromRoom.eventName,
+                    EVENT_TYPE.notification,
+                    STATUS.success
+                ) 
+
+                rooms.forEach(room => {
+                    room.kickPlayer(player)
+                    this.notifyPlayersInRoom(notification, room, player)
+                    if (room.isEmpty()) this.deleteRoom(room)
+                })
+
+                this.leavePlayerFromPublicLobby({ playerId: player.id }, connection)
+                this.leavePlayerFromPrivateLobby({ playerId: player.id }, connection)
+                this.deletePlayer(player)
+                this.playersConnections.delete(player)
+
                 break
             }
         }
@@ -72,7 +89,13 @@ class MatchMakingServer {
     connectPlayer(payload, connection) {
         try {
             const player = this.createPlayer(payload.playerId)
-            const response = new ServerEvent(EVENT.connectPlayer, EVENT_TYPE.response, STATUS.success)
+            
+            const response = new ServerEvent(
+                CLIENT_EVENT.connectPlayer.eventName,
+                EVENT_TYPE.response,
+                STATUS.success
+            )
+            
             this.createPlayerConnection(player, connection)
             connection.send(JSON.stringify(response))
         } catch(e) {
@@ -92,7 +115,7 @@ class MatchMakingServer {
         
         if (lobbys.length) {
             const notification = new ServerEvent(
-                EVENT.joinPlayerToPublicLobby,
+                CLIENT_EVENT.joinPlayerToPublicLobby.eventName,
                 EVENT_TYPE.notification,
                 STATUS.success,
                 { player }
@@ -107,7 +130,7 @@ class MatchMakingServer {
         }
 
         const response = new ServerEvent(
-            EVENT.joinPlayerToPublicLobby,
+            CLIENT_EVENT.joinPlayerToPublicLobby.eventName,
             EVENT_TYPE.response,
             STATUS.success,
             { lobbyId }
@@ -123,13 +146,13 @@ class MatchMakingServer {
         const lobbys = this.publicLobbys.filter(lobby => lobby.hasPlayer(player))
         
         const notification = new ServerEvent(
-            EVENT.leavePlayerFromPrivateLobby,
+            CLIENT_EVENT.leavePlayerFromPrivateLobby.eventName,
             EVENT_TYPE.notification,
             STATUS.success, 
         )
 
         const response = new ServerEvent(
-            EVENT.leavePlayerFromPrivateLobby,
+            CLIENT_EVENT.leavePlayerFromPrivateLobby.eventName,
             EVENT_TYPE.response,
             STATUS.success, 
         )
@@ -138,6 +161,7 @@ class MatchMakingServer {
         lobbys.forEach(lobby => { 
             lobby.kickPlayer(player)
             this.notifyPlayersInLobby(notification, lobby, player)
+            if (lobby.isEmpty()) this.deletePublicLobby(lobby)
         })
     }
 
@@ -153,14 +177,14 @@ class MatchMakingServer {
             lobby.addPlayer(player)
 
             const response = new ServerEvent(
-                EVENT.joinPlayerToPrivateLobby,
+                CLIENT_EVENT.joinPlayerToPrivateLobby.eventName,
                 EVENT_TYPE.response,
                 STATUS.success,
                 { lobbyId: lobby.id }
             )
     
             const notification = new ServerEvent(
-                EVENT.joinPlayerToPrivateLobby,
+                CLIENT_EVENT.joinPlayerToPrivateLobby.eventName,
                 EVENT_TYPE.notification,
                 STATUS.success,
                 {
@@ -173,7 +197,7 @@ class MatchMakingServer {
             this.notifyPlayersInLobby(notification, lobby, player)
         } else {
             const response = new ServerEvent(
-                EVENT.joinPlayerToPrivateLobby,
+                CLIENT_EVENT.joinPlayerToPrivateLobby.eventName,
                 EVENT_TYPE.response,
                 STATUS.fail,
                 {
@@ -187,6 +211,32 @@ class MatchMakingServer {
     }
 
     // Event
+    leavePlayerFromPrivateLobby(payload, connection) {
+        const { playerId } = payload
+        const player = this.players.filter(player => player.id === playerId)[0]
+        const lobbys = this.privateLobbys.filter(lobby => lobby.hasPlayer(player))
+        
+        const notification = new ServerEvent(
+            CLIENT_EVENT.leavePlayerFromPrivateLobby.eventName,
+            EVENT_TYPE.notification,
+            STATUS.success, 
+        )
+
+        const response = new ServerEvent(
+            CLIENT_EVENT.leavePlayerFromPrivateLobby.eventName,
+            EVENT_TYPE.response,
+            STATUS.success, 
+        )
+
+        connection.send(JSON.stringify(response))
+        lobbys.forEach(lobby => { 
+            lobby.kickPlayer(player)
+            this.notifyPlayersInLobby(notification, lobby, player)
+            if (lobby.isEmpty()) this.deletePrivateLobby(lobby)
+        })
+    }
+
+    // Event
     createPrivateLobby(payload, connection) {
         const { playerId } = payload
         const player = this.players.filter(player => player.id === playerId)[0]
@@ -195,7 +245,7 @@ class MatchMakingServer {
         lobby.addPlayer(player)
         
         const response = new ServerEvent(
-            EVENT.createPrivateLobby,
+            CLIENT_EVENT.createPrivateLobby.eventName,
             EVENT_TYPE.response,
             STATUS.success,
             {
@@ -220,7 +270,11 @@ class MatchMakingServer {
             this.addRoom(room)
         } else {
             let relevantRooms = this.rooms.filter(room => {
-                return this.compareFilters(room, player) && !room.isLocked() && !room.isFull()
+                const isFiltersCompared = this.compareFilters(room, player)
+                const isRoomAvailable = !room.isLocked()
+                const isRoomNotFull = !room.isFull()
+                const result = isFiltersCompared && isRoomAvailable && isRoomNotFull
+                return result
             })
 
             if (relevantRooms.length) {
@@ -234,14 +288,14 @@ class MatchMakingServer {
         }
 
         const response = new ServerEvent(
-            EVENT.findMatch,
+            CLIENT_EVENT.findMatch.eventName,
             EVENT_TYPE.response,
             STATUS.success,
             { roomId: room.id }
         )
 
         const notification = new ServerEvent(
-            EVENT.findMatch,
+            CLIENT_EVENT.findMatch.eventName,
             EVENT_TYPE.notification,
             STATUS.success,
             {
@@ -261,13 +315,13 @@ class MatchMakingServer {
         const rooms = this.rooms.filter(room => room.hasPlayer(player))
 
         const response = new ServerEvent(
-            EVENT.stopSearch,
+            CLIENT_EVENT.stopSearch.eventName,
             EVENT_TYPE.response,
             STATUS.success,
         )
 
         const notification = new ServerEvent(
-            EVENT.stopSearch,
+            CLIENT_EVENT.stopSearch.eventName,
             EVENT_TYPE.notification,
             STATUS.success,
             {
@@ -280,6 +334,7 @@ class MatchMakingServer {
         rooms.forEach(room => {
             room.kickPlayer(player)
             this.notifyPlayersInRoom(notification, room, player)
+            if (room.isEmpty()) this.deleteRoom(room)
         })
     }
 
